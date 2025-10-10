@@ -1,0 +1,394 @@
+/* src/CircleUnit.css — responsive overhaul */
+
+:root{
+  --radius-shadow: 26px;
+}
+
+.wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+
+  /* ใช้ dvh/svh สำหรับเบราเซอร์ใหม่; มี min fallback */
+
+  min-height: var(--appH, 100dvh);
+
+
+
+  border-radius: 25px;
+  background: #2b2b2bff;
+  padding: clamp(10px, 2.5vw, 16px);
+}
+
+.card {
+  /* กล่องยืดเต็มกว้าง แต่ล็อกเพดาน */
+  width: min(1000px, 96vw);
+  background: #bde9abff;
+  border-radius: var(--radius-shadow);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  padding: clamp(12px, 2.4vw, 20px);
+}
+
+/* ===== Title ===== */
+.title-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: clamp(8px, 1.6vw, 12px);
+}
+.title {
+  font-family: "Nunito", sans-serif;
+  font-weight: 900;
+  font-size: clamp(28px, 6vw, 60px);
+  line-height: 1.1;
+  padding: clamp(8px, 1.6vw, 10px) clamp(16px, 3vw, 26px);
+  border-radius: 18px;
+  color: #ffffff;
+  text-shadow:
+    -2px -2px 0 #1c3d91,
+     2px -2px 0 #1c3d91,
+    -2px  2px 0 #1c3d91,
+     2px  2px 0 #1c3d91;
+  letter-spacing: 1.2px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.title:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+
+/* ===== Stage (SVG area) ===== */
+.stage {
+  /* ให้เวทีคงอัตราส่วน 1:1 และเลือกขนาดที่ลงตัวทั้งแนวกว้าง/สูง */
+  margin: 8px auto;
+  width: min(720px, 92vw);
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(180deg, #f6fdff, #eef9ff);
+  border-radius: 22px;
+  box-shadow: inset 0 0 0 6px #d8ecff, inset 0 -8px 0 #cae6ff;
+}
+
+/* เมื่อจอเตี้ย (มือถือแนวนอน) ลดขนาดเวทีลงเล็กน้อยเพื่อเลี่ยงล้นแนวตั้ง */
+@media (max-height: 560px) and (orientation: landscape) {
+  .stage {
+    width: min(560px, 88vw);
+  }
+}
+
+/* ===== SVG text ===== */
+.deg-label {
+  font-weight: 900;
+  font-size: clamp(10px, 1.8vw, 14px);
+  fill: #1e293b;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 5px;
+}
+.pt {
+  font-size: clamp(10px, 1.6vw, 13px);
+  fill: #1f2937;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 5px;
+}
+.theta {
+  font-weight: 900;
+  font-size: clamp(14px, 2.5vw, 20px);
+  fill: #6d5bff;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 2px;
+}
+.val {
+  font-weight: 900;
+  font-size: clamp(12px, 2vw, 16px);
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 7px;
+}
+.val-sin { fill: #d43d2f; }
+.val-cos { fill: #1f7a33; }
+
+.quad {
+  font-family: "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: clamp(14px, 2.6vw, 20px);
+  fill: #2b2b2b;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* ===== Controls ===== */
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(8px, 1.8vw, 12px);
+  margin: 12px 4px 6px;
+}
+
+.btn {
+  font-family: "Nunito", sans-serif;
+  border: 2px solid transparent;
+  padding: clamp(10px, 2.4vw, 12px) clamp(12px, 2.4vw, 14px);
+  border-radius: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.08);
+  font-size: clamp(16px, 3.6vw, 24px);
+  touch-action: manipulation; /* ป้องกัน double-tap zoom */
+}
+.btn.pink { background: #e8425e; border-color: #f07384; }
+.btn.blue { background: #69b5d3; border-color: #5b9ac0; }
+.btn.active { outline: 4px solid rgba(255, 255, 255, 0.9); }
+
+/* Angle input group */
+.input_Container {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family: "Nunito", sans-serif;
+  padding: clamp(8px, 1.6vw, 10px) clamp(8px, 1.6vw, 10px);
+  border-radius: 14px;
+  background: #ffea76;
+  font-weight: 900;
+  color: #38357b;
+  font-size: clamp(16px, 3.6vw, 28px);
+}
+.Angle{
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(6px, 1.2vw, 8px);
+  font-weight: 900;
+  color: #38357b;
+}
+.inputAngle{
+  font-family: "Nunito", sans-serif;
+  font-weight:900;
+  background: none;
+  border: none;
+  color:#1e293b;
+  width: min(120px, 28vw);
+  text-align: center;
+  font-size: clamp(16px, 3.6vw, 28px);
+}
+.inputAngle::-webkit-outer-spin-button,
+.inputAngle::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.unit {
+  font-size: clamp(16px, 3.6vw, 28px);
+  font-weight: 900;
+  color: #38357b;
+}
+
+.searchIcon{
+  font-size: clamp(22px, 6vw, 46px);
+  color: #38357b;
+}
+.searchIcon *{
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  padding: 0 5px 0 0;
+  /* vector-effect: non-scaling-stroke;  // ปิดไว้เพื่อความเข้ากันได้ */
+}
+
+/* Range (slider) */
+.range {
+  width: 100%;
+  margin: clamp(6px, 1.2vw, 10px) 4px;
+  appearance: none;
+  height: clamp(8px, 1vw, 10px);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #69b5d3, #e8425e);
+  position: relative;
+}
+
+/* WEBKIT: Chrome, Edge, Safari */
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: clamp(18px, 3vw, 24px);
+  height: clamp(18px, 3vw, 24px);
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #254f91;
+
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+/* FIREFOX */
+.range::-moz-range-thumb {
+  width: clamp(18px, 3vw, 24px);
+  height: clamp(18px, 3vw, 24px);
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #254f91;
+  cursor: pointer;
+}
+
+/* Mozilla: Align to center of track */
+.range::-moz-range-track {
+  height: clamp(8px, 1vw, 10px);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #69b5d3, #e8425e);
+}
+
+
+/* Readouts (ผลลัพธ์) */
+.readouts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(8px, 1.8vw, 12px);
+  margin-top: 6px;
+}
+.pill {
+  border-radius: 14px;
+  padding: clamp(10px, 2.4vw, 12px) clamp(12px, 2.4vw, 14px);
+  font-weight: 900;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.07);
+  font-size: clamp(13px, 2vw, 16px);
+  min-height: clamp(54px, 10vw, 70px);
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 2px;
+  align-content: center;
+  justify-items: center;
+}
+.pill.violet { background: #7b41c9; }
+.pill.orange { background: #eb673a; }
+.pill.green  { background: #9fc11c; }
+
+.Header1 {
+  font-family: "Nunito", sans-serif;
+  text-align: center;
+  font-size: clamp(16px, 3.6vw, 34px);
+  color: #fff;
+  margin: 0;
+}
+.textInfo {
+  text-align: center;
+  font-size: clamp(14px, 3.2vw, 24px);
+  color: #fff;
+  margin: 0;
+}
+
+/* ===== Breakpoints ===== */
+@media (max-width: 900px) {
+  .actions { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .actions { grid-template-columns: 1fr; }
+  .readouts { grid-template-columns: 1fr; }
+}
+
+/* ป้องกันเลือกข้อความตอนลาก */
+.stage, .stage * {
+  -webkit-user-select: none; -moz-user-select: none;
+  -ms-user-select: none; user-select: none;
+}
+.deg-label, .pt, .val, .theta {
+  -webkit-user-select: none; user-select: none;
+}
+
+/* ลด motion สำหรับคนที่ตั้งค่าลดแอนิเมชัน */
+@media (prefers-reduced-motion: reduce) {
+  .title, .stage svg * { transition: none !important; }
+}
+
+/* ===== Compact layout: บีบทุกอย่างเมื่อหน้าต่างเตี้ย ===== */
+
+/* ใช้ 100dvh ให้กินเต็มสูงสุด และซ่อนสกอลล์ระดับแอป */
+html, body {
+  height: 100%;
+  overflow: hidden; /* ต้องการให้ทั้งหน้าไม่สกอลล์ */
+}
+
+.wrap {
+  min-height: 100dvh;  /* ให้เวทีกินเต็มหน้าต่าง */
+  padding: clamp(8px, 1.2vh, 16px);
+}
+
+/* การ์ดลด padding/เงา/รัศมี เมื่อสูงน้อย */
+@media (max-height: 820px) {
+  .card { padding: clamp(8px, 1.2vh, 14px); border-radius: 20px; }
+  .title { font-size: clamp(22px, 4.6vh, 48px); padding: 6px 14px; }
+}
+
+/* เวที SVG: จำกัดด้วยความสูงหน้าต่าง เพื่อไม่ให้ดันสกอลล์ */
+.stage{
+  /* เดิม: width: min(720px, 92vw); เพิ่มเงื่อนไขจากความสูงหน้าต่าง */
+  width: min(720px, 92vw, 60vh);
+}
+
+/* หน้าต่างเตี้ยลง → ลดเวทีลงตามขั้นบันได */
+@media (max-height: 740px) {
+  .stage { width: min(640px, 92vw, 70vh); }
+}
+@media (max-height: 660px) {
+  .stage { width: min(560px, 92vw, 64vh); }
+}
+@media (max-height: 600px) {
+  .stage { width: min(520px, 92vw, 58vh); }
+}
+
+/* ปุ่ม, อินพุต, ตัวเลขต่างๆ: ลดขนาด/ระยะห่างอัตโนมัติจาก vh */
+.actions {
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(6px, 1.2vh, 12px);
+  margin: clamp(4px, .8vh, 12px) 4px clamp(4px, .8vh, 10px);
+}
+.btn {
+  font-size: clamp(14px, 2.6vh, 22px);
+  padding: clamp(6px, 1.2vh, 12px) clamp(8px, 1.4vh, 14px);
+  border-radius: 14px;
+}
+.input_Container {
+  font-size: clamp(14px, 2.6vh, 24px);
+  padding: clamp(6px, 1vh, 10px) clamp(6px, 1vh, 10px);
+}
+.inputAngle, .unit, .searchIcon {
+  font-size: clamp(14px, 2.6vh, 24px);
+}
+
+/* แถบสไลเดอร์บางลงเล็กน้อย */
+.range { margin: clamp(4px, .8vh, 10px) 4px; }
+.range::-webkit-slider-runnable-track { height: clamp(4px, .6vh, 10px); }
+.range::-webkit-slider-thumb { width: clamp(14px, 2vh, 28px); height: clamp(14px, 2vh, 28px); }
+.range::-moz-range-thumb { width: clamp(14px, 2vh, 28px); height: clamp(14px, 2vh, 28px); }
+
+/* Readouts (Angle / Sin / Cos) บีบเป็น 1–2 คอลัมน์อัตโนมัติ */
+.readouts {
+  gap: clamp(6px, 1.2vh, 12px);
+}
+@media (max-height: 740px) {
+  .readouts { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-height: 640px) {
+  .readouts { grid-template-columns: 1fr; }
+}
+.pill {
+  min-height: clamp(44px, 8vh, 70px);
+  padding: clamp(8px, 1.2vh, 12px) clamp(10px, 1.6vh, 14px);
+  font-size: clamp(12px, 2vh, 16px);
+}
+
+/* ลดขนาดตัวอักษรบน SVG ให้สัมพันธ์กับความสูง */
+.deg-label { font-size: clamp(9px, 1.6vh, 13px); }
+.pt        { font-size: clamp(8px, 1.4vh, 12px); }
+.theta     { font-size: clamp(12px, 2vh, 18px); }
+.val       { font-size: clamp(11px, 1.8vh, 16px); }
+.quad      { font-size: clamp(12px, 2vh, 18px); }
+
+/* เมื่อสูงน้อยมากๆ: จัดแถวปุ่มให้เหลือ 1 คอลัมน์เพื่อลดความสูงรวม */
+@media (max-height: 640px) {
+  .actions { grid-template-columns: 1fr; }
+}
+
+/* ย่อเวทีลงอีกในจอเตี้ยมาก */
+@media (max-height: 560px) {
+  .stage { width: min(500px, 88vw, 52vh); }
+}
+
+/* ลดฟอนต์ในปุ่มให้เล็กลงกว่านี้ได้ */
+.btn {
+  font-size: clamp(12px, 2.2vh, 18px);
+}
