@@ -130,7 +130,9 @@ export default function CircleUnit() {
     setDragging(false);
     try {
       e.currentTarget.releasePointerCapture?.(e.pointerId);
-    } catch {}
+    } catch {
+      /* ignore errors from releasePointerCapture for older browsers */
+    }
   };
 
   // ===== วาดสามเหลี่ยมตามมุมที่ระบุ =====
@@ -152,6 +154,16 @@ const TriangleArm = ({
   opacityHeight = 1,
   opacityHyp = 1,
   arcOpacity = 1,
+  // hypotenuse dashed?
+  hypDashed = true,
+  // right-angle marker
+  showRightAngle = false,
+  rightAngleSize = 14,
+  rightAngleColor = "#254f91",
+  // leg labels (cos / sin)
+  showLegLabels = false,
+  legLabelOffset = 12,
+  labelFontSize = 14,
 }) => {
   const radA = (angle * Math.PI) / 180;
   const sA = Math.sin(radA);
@@ -178,8 +190,56 @@ const TriangleArm = ({
       <line
         x1={cx} y1={cy} x2={ux} y2={uy}
         stroke={colorHyp} strokeWidth={widthHyp} opacity={opacityHyp}
-        strokeDasharray="6 6"
+        {...(hypDashed ? { strokeDasharray: "6 6" } : {})}
       />
+      {hypDashed && (
+        <line
+          x1={cx} y1={cy} x2={ux} y2={uy}
+          stroke={colorHyp} strokeWidth={widthHyp} opacity={opacityHyp}
+          strokeDasharray="6 6"
+        />
+      )}
+
+      {/* right-angle square at the corner between base & height */}
+      {showRightAngle && (() => {
+        const s = rightAngleSize;
+        // corner at (ux, cy)
+        // draw the square pointing "inwards" towards the triangle interior
+        const dirX = ux > cx ? -1 : 1; // inward along x toward center
+        const dirY = uy < cy ? -1 : 1; // inward along y toward the triangle interior
+        const p1x = ux;
+        const p1y = cy;
+        const p2x = ux + dirX * s;
+        const p2y = cy;
+        const p3x = ux + dirX * s;
+        const p3y = cy + dirY * s;
+        const p4x = ux;
+        const p4y = cy + dirY * s;
+        const d = `M ${p1x} ${p1y} L ${p2x} ${p2y} L ${p3x} ${p3y} L ${p4x} ${p4y} Z`;
+        return <path d={d} fill="none" stroke={rightAngleColor} strokeWidth={3} opacity={0.95} />;
+      })()}
+
+      {/* leg labels for cos & sin */}
+      {showLegLabels && (() => {
+        const offset = legLabelOffset;
+        const midBaseX = (cx + ux) / 1.8;
+        const baseLabelY = cy + offset + 10; // below the base
+        const midHeightY = (cy + uy) / 2;
+        const heightLabelX = ux + (ux > cx ? offset + 8 : -(offset + 22)); // to the right for Q1
+        return (
+          <g style={{ pointerEvents: "none" }}>
+            {/* cos label below base */}
+            <text x={midBaseX} y={baseLabelY} textAnchor="middle" fill={colorBase} fontSize={labelFontSize}>
+              Cos θ
+            </text>
+
+            {/* sin label beside height */}
+            <text x={heightLabelX} y={midHeightY} fill={colorHeight} fontSize={labelFontSize} dominantBaseline="middle">
+              Sin θ
+            </text>
+          </g>
+        );
+      })()}
 
       {/* มุม θ (ถ้าต้องการแสดง) */}
       {showArc && (() => {
@@ -269,8 +329,8 @@ const TriangleArm = ({
 <TriangleArm
   angle={d}
   showArc
-  colorBase={cosStroke}
-  colorHeight={sinStroke}
+  colorBase="#2196F3"     // สีฟ้าสำหรับ Cos
+  colorHeight="#E91E63"   // สีชมพูสำหรับ Sin
   colorHyp="#ff9900"
   widthBase={focus === "cos" ? 6 : 4}
   widthHeight={focus === "sin" ? 6 : 4}
@@ -280,6 +340,13 @@ const TriangleArm = ({
   opacityHyp={0.9}
   arcColor="#0BA6DF"
   arcOpacity={0.9}
+  hypDashed={false}
+  showRightAngle={true}
+  rightAngleSize={14}
+  rightAngleColor="#254f91"
+  showLegLabels={true}
+  legLabelOffset={14}
+  labelFontSize={14}
 />
 
 <TriangleArm
