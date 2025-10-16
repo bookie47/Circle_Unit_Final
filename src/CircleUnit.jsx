@@ -1,3 +1,53 @@
+// แปลงมุม θ เป็นสูตร sin/cos ตามตาราง (เช่น sin120° = sin60°, cos120° = -cos60°)
+function getSinText(theta) {
+  // นำมุมให้อยู่ใน [0, 360)
+  let t = ((theta % 360) + 360) % 360;
+  // กำหนดค่าพื้นฐาน
+  if (t === 0) return '0';
+  if (t === 90) return '1';
+  if (t === 180) return '0';
+  if (t === 270) return '-1';
+  if (t === 360) return '0';
+  // Q1
+  if (t > 0 && t < 90) return `sin${t}`;
+  // Q2
+  if (t > 90 && t < 180) return `sin${180 - t}`;
+  // Q3
+  if (t > 180 && t < 270) return `-sin${t - 180}`;
+  // Q4
+  if (t > 270 && t < 360) return `-sin${360 - t}`;
+  // มุมพิเศษ
+  if (t === 45) return 'sin45';
+  if (t === 135) return 'sin45';
+  if (t === 225) return '-sin45';
+  if (t === 315) return '-sin45';
+  return `sin${t}`;
+}
+
+function getCosText(theta) {
+  // นำมุมให้อยู่ใน [0, 360)
+  let t = ((theta % 360) + 360) % 360;
+  // กำหนดค่าพื้นฐาน
+  if (t === 0) return '1';
+  if (t === 90) return '0';
+  if (t === 180) return '-1';
+  if (t === 270) return '0';
+  if (t === 360) return '1';
+  // Q1
+  if (t > 0 && t < 90) return `cos${t}`;
+  // Q2
+  if (t > 90 && t < 180) return `-cos${180 - t}`;
+  // Q3
+  if (t > 180 && t < 270) return `-cos${t - 180}`;
+  // Q4
+  if (t > 270 && t < 360) return `cos${360 - t}`;
+  // มุมพิเศษ
+  if (t === 45) return 'cos45';
+  if (t === 135) return '-cos45';
+  if (t === 225) return '-cos45';
+  if (t === 315) return 'cos45';
+  return `cos${t}`;
+}
 // src/CircleUnit.jsx
 import React, { useMemo, useState, useRef, useCallback } from "react";
 import { FiSearch } from "react-icons/fi";
@@ -39,8 +89,7 @@ export default function CircleUnit() {
   const s = useMemo(() => Math.sin(rad), [rad]);
   const c = useMemo(() => Math.cos(rad), [rad]);
 
-  // complementary angle for cos display (keep in [0,360))
-  const comp = ((90 - d) % 360 + 360) % 360;
+  // complementary angle for cos/cos formula: use (90 - d) inline
 
   // ---- Canvas params ----
   const size = 560;
@@ -457,14 +506,14 @@ const TriangleArm = ({
             className={`btn pink ${focus === "sin" ? "active" : ""}`}
             onClick={() => setFocus(focus === "sin" ? "none" : "sin")}
           >
-            {`Sin ${d}°`}
+            {getSinText(d)}
           </button>
 
           <button
             className={`btn blue ${focus === "cos" ? "active" : ""}`}
             onClick={() => setFocus(focus === "cos" ? "none" : "cos")}
           >
-            {`Cos ${comp}°`}
+            {getCosText(d)}
           </button>
 
           <div className="input_Container">
