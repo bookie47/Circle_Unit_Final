@@ -39,6 +39,9 @@ export default function CircleUnit() {
   const s = useMemo(() => Math.sin(rad), [rad]);
   const c = useMemo(() => Math.cos(rad), [rad]);
 
+  // complementary angle for cos display (keep in [0,360))
+  const comp = ((90 - d) % 360 + 360) % 360;
+
   // ---- Canvas params ----
   const size = 560;
   const r = 190;
@@ -228,12 +231,12 @@ const TriangleArm = ({
         const heightLabelX = ux + (ux > cx ? offset + 8 : -(offset + 22)); // to the right for Q1
         return (
           <g style={{ pointerEvents: "none" }}>
-            {/* cos label below base */}
+            {/* cos label below base with angle and value */}
             <text x={midBaseX} y={baseLabelY} textAnchor="middle" fill={colorBase} fontSize={labelFontSize}>
-              Cos θ
+              Cos θ 
             </text>
 
-            {/* sin label beside height */}
+            {/* sin label beside height with angle and value */}
             <text x={heightLabelX} y={midHeightY} fill={colorHeight} fontSize={labelFontSize} dominantBaseline="middle">
               Sin θ
             </text>
@@ -241,13 +244,41 @@ const TriangleArm = ({
         );
       })()}
 
-      {/* มุม θ (ถ้าต้องการแสดง) */}
+      {/* มุม θ และมุมภายในสามเหลี่ยม */}
       {showArc && (() => {
+        // มุม θ หลัก
         const startDeg = 90;          // toSvg(0)
         const endDeg   = 90 - angle;  // toSvg(angle)
         const path = describeArcSweep(cx, cy, 40, startDeg, endDeg, angle <= 0);
-        return <path d={path} stroke={arcColor} strokeWidth={4} opacity={arcOpacity} fill="none" />;
+
+        // จุดกึ่งกลางของมุม θ สำหรับวางป้าย
+        const midAngle = angle / 2;
+        const labelR = 30;  // รัศมีของป้าย
+        const labelX = cx + labelR * Math.cos((90 - midAngle) * Math.PI / 180);
+        const labelY = cy - labelR * Math.sin((90 - midAngle) * Math.PI / 180);
+
+        return (
+          <g>
+            <path d={path} stroke={arcColor} strokeWidth={4} opacity={arcOpacity} fill="none" />
+            <text x={labelX} y={labelY} textAnchor="middle" dominantBaseline="middle" 
+                  fill={arcColor} fontSize={12} fontWeight="bold">
+            </text>
+          </g>
+        );
       })()}
+
+      {/* มุมฉาก 90° */}
+      {showRightAngle && (
+        <text x={ux + (ux > cx ? -18 : 18)} y={cy + 18} 
+              textAnchor={ux > cx ? "end" : "start"} 
+              dominantBaseline="middle"
+              fill={rightAngleColor} 
+              fontSize={12}
+              fontWeight="bold">
+      
+        </text>
+      )}
+
     </g>
   );
 };
@@ -329,8 +360,8 @@ const TriangleArm = ({
 <TriangleArm
   angle={d}
   showArc
-  colorBase="#2196F3"     // สีฟ้าสำหรับ Cos
-  colorHeight="#E91E63"   // สีชมพูสำหรับ Sin
+  colorBase={cosStroke}
+  colorHeight={sinStroke}
   colorHyp="#ff9900"
   widthBase={focus === "cos" ? 6 : 4}
   widthHeight={focus === "sin" ? 6 : 4}
@@ -426,14 +457,14 @@ const TriangleArm = ({
             className={`btn pink ${focus === "sin" ? "active" : ""}`}
             onClick={() => setFocus(focus === "sin" ? "none" : "sin")}
           >
-            Find Sin
+            {`Sin ${d}°`}
           </button>
 
           <button
             className={`btn blue ${focus === "cos" ? "active" : ""}`}
             onClick={() => setFocus(focus === "cos" ? "none" : "cos")}
           >
-            Find Cos
+            {`Cos ${comp}°`}
           </button>
 
           <div className="input_Container">
