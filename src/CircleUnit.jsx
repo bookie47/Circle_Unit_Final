@@ -1,52 +1,156 @@
+// Map angle to triangle side values (base, height) per table
+function getTriangleBaseText(theta) {
+  const t = ((theta % 360) + 360) % 360;
+  // Table: base (adjacent to angle)
+  const table = {
+    0: '2',
+    30: '√3',
+    45: '√2',
+    60: '1',
+    90: '0',
+    120: '-1',
+    135: '-√2',
+    150: '-√3',
+    180: '-2',
+    210: '-√3',
+    225: '-√2',
+    240: '-1',
+    270: '0',
+    300: '1',
+    315: '√2',
+    330: '√3',
+    360: '2'
+  };
+  return table[t] ?? '';
+}
+
+function getTriangleHeightText(theta) {
+  const t = ((theta % 360) + 360) % 360;
+  // Table: height (opposite to angle)
+  const table = {
+    0: '0', 30: '1', 45: '√2', 60: '√3', 90: '2',
+    120: '√3', 135: '√2', 150: '1', 180: '0',
+    210: '-1', 225: '-√2', 240: '-√3', 270: '-2',
+    300: '-√3', 315: '-√2', 330: '-1', 360: '0'
+  };
+  return table[t] ?? '';
+}
+
+// parse side text like '√3', '√2', '2', '-√2', '1/2', '√2/2' into numeric value
+function parseSideValue(text) {
+  if (!text || text === '') return 0;
+  let s = String(text).trim();
+  let sign = 1;
+  if (s.startsWith('-')) {
+    sign = -1;
+    s = s.slice(1);
+  }
+  // patterns
+  // sqrt with optional denom: √N or √N/D
+  const sqrtDen = s.match(/^√(\d+)(?:\/(\d+))?$/);
+  if (sqrtDen) {
+    const n = Number(sqrtDen[1]);
+    const denom = sqrtDen[2] ? Number(sqrtDen[2]) : 1;
+    return sign * (Math.sqrt(n) / denom);
+  }
+  // fraction a/b
+  const frac = s.match(/^(\d+)\/(\d+)$/);
+  if (frac) return sign * (Number(frac[1]) / Number(frac[2]));
+  // plain number
+  const num = Number(s);
+  if (!Number.isNaN(num)) return sign * num;
+  return 0;
+}
+
+// format hypotenuse from numeric: if square of hyp is integer, show sqrt form when appropriate
+function formatHypFromValues(aText, bText) {
+  const a = Math.abs(parseSideValue(aText));
+  const b = Math.abs(parseSideValue(bText));
+  const sq = Math.round((a * a + b * b) * 1000000) / 1000000; // round small FP error
+  // if sq is integer
+  const sqInt = Math.round(sq);
+  if (Math.abs(sq - sqInt) < 1e-9) {
+    // perfect square?
+    const root = Math.round(Math.sqrt(sqInt));
+    if (root * root === sqInt) return String(root);
+    return `√${sqInt}`;
+  }
+  // else not integer -> try to simplify common rational like (a^2+b^2) maybe 5 -> √5, else decimal
+  const hyp = Math.sqrt(a * a + b * b);
+  return fmtNumber(hyp);
+}
 // แปลงมุม θ เป็นสูตร sin/cos ตามตาราง (เช่น sin120° = sin60°, cos120° = -cos60°)
+// Return a short formatted number (remove trailing zeros), keep -0 as 0
+function fmtNumber(v) {
+  if (Object.is(v, -0)) v = 0;
+  if (Math.abs(v) === 1) return v > 0 ? '1' : '-1';
+  if (Math.abs(v) < 1e-12) return '0';
+  // show up to 3 decimal places but trim
+  return String(Number(v.toFixed(3)));
+}
+
 function getSinText(theta) {
-  // นำมุมให้อยู่ใน [0, 360)
-  let t = ((theta % 360) + 360) % 360;
-  // กำหนดค่าพื้นฐาน
+  const t = ((theta % 360) + 360) % 360; // 0..359
+  const rad = (theta * Math.PI) / 180;
+  // exact specials
+  const map = { 30: '1/2', 45: '√2/2', 60: '√3/2' };
   if (t === 0) return '0';
   if (t === 90) return '1';
   if (t === 180) return '0';
   if (t === 270) return '-1';
-  if (t === 360) return '0';
-  // Q1
-  if (t > 0 && t < 90) return `sin${t}`;
-  // Q2
-  if (t > 90 && t < 180) return `sin${180 - t}`;
-  // Q3
-  if (t > 180 && t < 270) return `-sin${t - 180}`;
-  // Q4
-  if (t > 270 && t < 360) return `-sin${360 - t}`;
-  // มุมพิเศษ
-  if (t === 45) return 'sin45';
-  if (t === 135) return 'sin45';
-  if (t === 225) return '-sin45';
-  if (t === 315) return '-sin45';
-  return `sin${t}`;
+
+  let sign = '';
+  let ref = 0;
+  if (t > 0 && t < 90) {
+    sign = '';
+    ref = t;
+  } else if (t > 90 && t < 180) {
+    sign = '';
+    ref = 180 - t;
+  } else if (t > 180 && t < 270) {
+    sign = '-';
+    ref = t - 180;
+  } else if (t > 270 && t < 360) {
+    sign = '-';
+    ref = 360 - t;
+  }
+
+  if (map[ref]) return `${sign}${map[ref]}`;
+
+  // fallback: numeric value
+  const val = Math.sin(rad);
+  return fmtNumber(val);
 }
 
 function getCosText(theta) {
-  // นำมุมให้อยู่ใน [0, 360)
-  let t = ((theta % 360) + 360) % 360;
-  // กำหนดค่าพื้นฐาน
+  const t = ((theta % 360) + 360) % 360;
+  const rad = (theta * Math.PI) / 180;
+  const map = { 30: '√3/2', 45: '√2/2', 60: '1/2' };
   if (t === 0) return '1';
   if (t === 90) return '0';
   if (t === 180) return '-1';
   if (t === 270) return '0';
-  if (t === 360) return '1';
-  // Q1
-  if (t > 0 && t < 90) return `cos${t}`;
-  // Q2
-  if (t > 90 && t < 180) return `-cos${180 - t}`;
-  // Q3
-  if (t > 180 && t < 270) return `-cos${t - 180}`;
-  // Q4
-  if (t > 270 && t < 360) return `cos${360 - t}`;
-  // มุมพิเศษ
-  if (t === 45) return 'cos45';
-  if (t === 135) return '-cos45';
-  if (t === 225) return '-cos45';
-  if (t === 315) return 'cos45';
-  return `cos${t}`;
+
+  let sign = '';
+  let ref = 0;
+  if (t > 0 && t < 90) {
+    sign = '';
+    ref = t;
+  } else if (t > 90 && t < 180) {
+    sign = '-';
+    ref = 180 - t;
+  } else if (t > 180 && t < 270) {
+    sign = '-';
+    ref = t - 180;
+  } else if (t > 270 && t < 360) {
+    sign = '';
+    ref = 360 - t;
+  }
+
+  if (map[ref]) return `${sign}${map[ref]}`;
+
+  const val = Math.cos(rad);
+  return fmtNumber(val);
 }
 // src/CircleUnit.jsx
 import React, { useMemo, useState, useRef, useCallback } from "react";
@@ -278,17 +382,38 @@ const TriangleArm = ({
         const baseLabelY = cy + offset + 10; // below the base
         const midHeightY = (cy + uy) / 2;
         const heightLabelX = ux + (ux > cx ? offset + 8 : -(offset + 22)); // to the right for Q1
+        // สไตล์สำหรับ label
+        const labelStyle = {
+          fontSize: 20,
+          fontWeight: "bold",
+          fill: "#fff",
+          filter: "drop-shadow(0 1px 2px #0006)",
+        };
+        const bgStyle = {
+          rx: 12,
+          ry: 12,
+          fill: "#254f91",
+          opacity: 0.85,
+        };
+        // ข้อความแต่ละด้าน
+        const baseText = getTriangleBaseText(angle);
+        const heightText = getTriangleHeightText(angle);
         return (
           <g style={{ pointerEvents: "none" }}>
-            {/* cos label below base with angle and value */}
-            <text x={midBaseX} y={baseLabelY} textAnchor="middle" fill={colorBase} fontSize={labelFontSize}>
-              Cos θ 
-            </text>
-
-            {/* sin label beside height with angle and value */}
-            <text x={heightLabelX} y={midHeightY} fill={colorHeight} fontSize={labelFontSize} dominantBaseline="middle">
-              Sin θ
-            </text>
+            {/* base (adjacent): value from table by angle */}
+            <g>
+              <rect x={midBaseX - 26} y={baseLabelY - 18} width={52} height={32} {...bgStyle} />
+              <text x={midBaseX} y={baseLabelY+4} textAnchor="middle" style={labelStyle}>
+                {baseText}
+              </text>
+            </g>
+            {/* height (opposite): value from table by angle */}
+            <g>
+              <rect x={heightLabelX - 26} y={midHeightY - 18} width={52} height={32} {...bgStyle} />
+              <text x={heightLabelX} y={midHeightY} textAnchor="middle" dominantBaseline="middle" style={labelStyle}>
+                {heightText}
+              </text>
+            </g>
           </g>
         );
       })()}
@@ -327,6 +452,34 @@ const TriangleArm = ({
       
         </text>
       )}
+
+      {/* hypotenuse label: show pythagorean length based on table values */}
+      {(() => {
+        // hypotenuse fixed at 2 (per table)
+        const mx = (cx + ux) / 2;
+        const my = (cy + uy) / 2;
+        // สไตล์สำหรับ label
+        const labelStyle = {
+          fontSize: 20,
+          fontWeight: "bold",
+          fill: "#fff",
+          filter: "drop-shadow(0 1px 2px #0006)",
+        };
+        const bgStyle = {
+          rx: 12,
+          ry: 12,
+          fill: "#ff9900",
+          opacity: 0.85,
+        };
+        return (
+          <g>
+            <rect x={mx - 48} y={my - 36} width={52} height={32} {...bgStyle} />
+            <text x={mx-20} y={my - 12} textAnchor="middle" style={labelStyle}>
+              {'2'}
+            </text>
+          </g>
+        );
+      })()}
 
     </g>
   );
@@ -427,36 +580,6 @@ const TriangleArm = ({
   showLegLabels={true}
   legLabelOffset={14}
   labelFontSize={14}
-/>
-
-<TriangleArm
-  angle={180 - d}
-  colorBase="#009688"
-  colorHeight="#8bc34a"
-  colorHyp="#cddc39"
-  opacityBase={0.7}
-  opacityHeight={0.7}
-  opacityHyp={0.6}
-/>
-
-<TriangleArm
-  angle={180 + d}
-  colorBase="#9c27b0"
-  colorHeight="#7800afff"
-  colorHyp="#673ab7"
-  opacityBase={0.35}
-  opacityHeight={0.35}
-  opacityHyp={0.3}
-/>
-
-<TriangleArm
-  angle={360 - d}
-  colorBase="#03a9f4"
-  colorHeight="#fca400ff"
-  colorHyp="#d8a706ff"
-  opacityBase={0.55}
-  opacityHeight={0.55}
-  opacityHyp={0.5}
 />
 
 {/* วงกลมแดงไว้ท้ายสุดเพื่อให้อยู่บนสุด */}
