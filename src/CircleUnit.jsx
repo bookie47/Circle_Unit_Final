@@ -1,39 +1,24 @@
-// Map angle to triangle side values (base, height) per table
+import trigData from '../data/trig_table_removed_main_angles.json';
+import mainTrigData from '../data/main_Table.json';
+
+const mainAngleMap = new Map(mainTrigData.map(item => [item.degree, item]));
+
 function getTriangleBaseText(theta) {
-  const t = ((theta % 360) + 360) % 360;
-  // Table: base (adjacent to angle)
-  const table = {
-    0: '2',
-    30: '√3',
-    45: '√2',
-    60: '1',
-    90: '0',
-    120: '-1',
-    135: '-√2',
-    150: '-√3',
-    180: '-2',
-    210: '-√3',
-    225: '-√2',
-    240: '-1',
-    270: '0',
-    300: '1',
-    315: '√2',
-    330: '√3',
-    360: '2'
-  };
-  return table[t] ?? '';
+  const normalizedAngle = ((theta % 360) + 360) % 360;
+  if (mainAngleMap.has(normalizedAngle)) {
+    return mainAngleMap.get(normalizedAngle).cos;
+  }
+  const data = trigData.find(item => item['มุม (°)'] === normalizedAngle);
+  return data ? String(data['ประชิด (2cosθ)']) : '';
 }
 
 function getTriangleHeightText(theta) {
-  const t = ((theta % 360) + 360) % 360;
-  // Table: height (opposite to angle)
-  const table = {
-    0: '0', 30: '1', 45: '√2', 60: '√3', 90: '2',
-    120: '√3', 135: '√2', 150: '1', 180: '0',
-    210: '-1', 225: '-√2', 240: '-√3', 270: '-2',
-    300: '-√3', 315: '-√2', 330: '-1', 360: '0'
-  };
-  return table[t] ?? '';
+  const normalizedAngle = ((theta % 360) + 360) % 360;
+  if (mainAngleMap.has(normalizedAngle)) {
+    return mainAngleMap.get(normalizedAngle).sin;
+  }
+  const data = trigData.find(item => item['มุม (°)'] === normalizedAngle);
+  return data ? String(data['ตรงข้าม (2sinθ)']) : '';
 }
 
 // parse side text like '√3', '√2', '2', '-√2', '1/2', '√2/2' into numeric value
@@ -152,11 +137,23 @@ function getCosText(theta) {
   const val = Math.cos(rad);
   return fmtNumber(val);
 }
-// src/CircleUnit.jsx
 import React, { useMemo, useState, useRef, useCallback } from "react";
 import { FiSearch } from "react-icons/fi";
 import "./CircleUnit.css";
 import { formatTrigValue } from "./trigFormatter";
+
+/* ===== helpers (geometry) ===== */
+function polarToCartesian(cx, cy, r, deg) {
+  const rad = ((deg - 90) * Math.PI) / 180; // 0° = ขึ้น, เดินตามเข็ม = บวก
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+function describeArcSweep(cx, cy, r, startDeg, endDeg, sweepCW = true) {
+  const start = polarToCartesian(cx, cy, r, startDeg);
+  const end = polarToCartesian(cx, cy, r, endDeg);
+  const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+  const sweep = sweepCW ? 1 : 0; // 1 = clockwise
+  return ["M", start.x, start.y, "A", r, r, 0, large, sweep, end.x, end.y].join(" ");
+}
 
 export default function CircleUnit() {
   const [deg, setDeg] = useState("45");
@@ -310,14 +307,17 @@ const TriangleArm = ({
   opacityHeight = 1,
   opacityHyp = 1,
   arcOpacity = 1,
-  // hypotenuse dashed?
-  hypDashed = true,
+  // dashed lines
+  baseDashed = false,
+  heightDashed = false,
+  hypDashed = false,
   // right-angle marker
   showRightAngle = false,
   rightAngleSize = 14,
   rightAngleColor = "#254f91",
   // leg labels (cos / sin)
   showLegLabels = false,
+  showHypLabel = false,
   legLabelOffset = 12,
   labelFontSize = 14,
 }) => {
@@ -335,12 +335,14 @@ const TriangleArm = ({
         x1={cx} y1={cy} x2={ux} y2={cy}
         stroke={colorBase} strokeWidth={widthBase} opacity={opacityBase}
         style={smooth}
+        {...(baseDashed ? { strokeDasharray: "6 6" } : {})}
       />
       {/* สูง (sin) */}
       <line
         x1={ux} y1={cy} x2={ux} y2={uy}
         stroke={colorHeight} strokeWidth={widthHeight} opacity={opacityHeight}
         style={smooth}
+        {...(heightDashed ? { strokeDasharray: "6 6" } : {})}
       />
       {/* ไฮโปเทนิวส์ */}
       <line
@@ -348,13 +350,6 @@ const TriangleArm = ({
         stroke={colorHyp} strokeWidth={widthHyp} opacity={opacityHyp}
         {...(hypDashed ? { strokeDasharray: "6 6" } : {})}
       />
-      {hypDashed && (
-        <line
-          x1={cx} y1={cy} x2={ux} y2={uy}
-          stroke={colorHyp} strokeWidth={widthHyp} opacity={opacityHyp}
-          strokeDasharray="6 6"
-        />
-      )}
 
       {/* right-angle square at the corner between base & height */}
       {showRightAngle && (() => {
@@ -378,13 +373,13 @@ const TriangleArm = ({
       {/* leg labels for cos & sin */}
       {showLegLabels && (() => {
         const offset = legLabelOffset;
-        const midBaseX = (cx + ux) / 1.8;
-        const baseLabelY = cy + offset + 10; // below the base
-        const midHeightY = (cy + uy) / 2;
-        const heightLabelX = ux + (ux > cx ? offset + 8 : -(offset + 22)); // to the right for Q1
+        const midBaseX = (cx + ux) / 1.9;
+        const baseLabelY = cy + offset + 12; // below the base
+        const midHeightY = (cy + uy) / 1.9;
+        const heightLabelX = ux + (ux > cx ? offset + 18 : -(offset + 22)); // to the right for Q1
         // สไตล์สำหรับ label
         const labelStyle = {
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: "bold",
           fill: "#fff",
           filter: "drop-shadow(0 1px 2px #0006)",
@@ -392,7 +387,7 @@ const TriangleArm = ({
         const bgStyle = {
           rx: 12,
           ry: 12,
-          fill: "#254f91",
+          fill: "#ae0000ff",
           opacity: 0.85,
         };
         // ข้อความแต่ละด้าน
@@ -454,10 +449,10 @@ const TriangleArm = ({
       )}
 
       {/* hypotenuse label: show pythagorean length based on table values */}
-      {(() => {
+      {showHypLabel && (() => {
         // hypotenuse fixed at 2 (per table)
         const mx = (cx + ux) / 2;
-        const my = (cy + uy) / 2;
+        const my = (cy + uy) / 2.2;
         // สไตล์สำหรับ label
         const labelStyle = {
           fontSize: 20,
@@ -468,7 +463,7 @@ const TriangleArm = ({
         const bgStyle = {
           rx: 12,
           ry: 12,
-          fill: "#ff9900",
+          fill: "#3eb408ff",
           opacity: 0.85,
         };
         return (
@@ -484,7 +479,6 @@ const TriangleArm = ({
     </g>
   );
 };
-
   return (
     <div className="wrap">
       <div className="card">
@@ -578,8 +572,66 @@ const TriangleArm = ({
   rightAngleSize={14}
   rightAngleColor="#254f91"
   showLegLabels={true}
+  showHypLabel={true}
   legLabelOffset={14}
   labelFontSize={14}
+/>
+
+{/* Reflected triangle (X-axis) */}
+<TriangleArm
+  angle={-d}
+  colorBase="#69b5d3"
+  colorHeight="#69b5d3"
+  colorHyp="#5b9ac0"
+  widthBase={4}
+  widthHeight={4}
+  widthHyp={4}
+  opacityBase={0.7}
+  opacityHeight={0.7}
+  opacityHyp={0.6}
+  baseDashed={true}
+  heightDashed={true}
+  hypDashed={true}
+  showLegLabels={false}
+  showHypLabel={false}
+/>
+
+{/* Reflected triangle (Y-axis) */}
+<TriangleArm
+  angle={180 - d}
+  colorBase="#9fc11c"
+  colorHeight="#9fc11c"
+  colorHyp="#8aab15"
+  widthBase={4}
+  widthHeight={4}
+  widthHyp={4}
+  opacityBase={0.7}
+  opacityHeight={0.7}
+  opacityHyp={0.6}
+  baseDashed={true}
+  heightDashed={true}
+  hypDashed={true}
+  showLegLabels={false}
+  showHypLabel={false}
+/>
+
+{/* Reflected triangle (Origin) */}
+<TriangleArm
+  angle={d + 180}
+  colorBase="#7b41c9"
+  colorHeight="#7b41c9"
+  colorHyp="#6a38b1"
+  widthBase={4}
+  widthHeight={4}
+  widthHyp={4}
+  opacityBase={0.7}
+  opacityHeight={0.7}
+  opacityHyp={0.6}
+  baseDashed={true}
+  heightDashed={true}
+  hypDashed={true}
+  showLegLabels={false}
+  showHypLabel={false}
 />
 
 {/* วงกลมแดงไว้ท้ายสุดเพื่อให้อยู่บนสุด */}
@@ -616,6 +668,7 @@ const TriangleArm = ({
                   style={{ cursor: "pointer" }}
                   onPointerDown={handlePointerDown}
                   onPointerUp={handlePointerUp}
+  
                   onPointerMove={handlePointerMove}
                 />
               );
@@ -682,17 +735,4 @@ const TriangleArm = ({
       </div>
     </div>
   );
-}
-
-/* ===== helpers (geometry) ===== */
-function polarToCartesian(cx, cy, r, deg) {
-  const rad = ((deg - 90) * Math.PI) / 180; // 0° = ขึ้น, เดินตามเข็ม = บวก
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-}
-function describeArcSweep(cx, cy, r, startDeg, endDeg, sweepCW = true) {
-  const start = polarToCartesian(cx, cy, r, startDeg);
-  const end = polarToCartesian(cx, cy, r, endDeg);
-  const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
-  const sweep = sweepCW ? 1 : 0; // 1 = clockwise
-  return ["M", start.x, start.y, "A", r, r, 0, large, sweep, end.x, end.y].join(" ");
 }
