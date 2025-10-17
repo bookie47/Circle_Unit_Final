@@ -387,7 +387,7 @@ const TriangleArm = ({
         const bgStyle = {
           rx: 12,
           ry: 12,
-          fill: "#ae0000ff",
+          fill: "#15438dff",
           opacity: 0.85,
         };
         // ข้อความแต่ละด้าน
@@ -463,7 +463,7 @@ const TriangleArm = ({
         const bgStyle = {
           rx: 12,
           ry: 12,
-          fill: "#3eb408ff",
+          fill: "#e89a09ff",
           opacity: 0.85,
         };
         return (
